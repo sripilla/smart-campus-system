@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Campus Dashboard</title>
+    <style>
+        body {
+            font-family: Arial;
+            margin: 20px;
+            background-color: #f5f7fa;
+        }
+
+        h1 {
+            color: #2c3e50;
+        }
+
+        .card {
+            background: white;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn {
+            display:inline-block;
+            padding:10px 15px;
+            color:white;
+            text-decoration:none;
+            border-radius:5px;
+            margin-top:10px;
+        }
+
+        .btn-green {
+            background-color:#2ecc71;
+        }
+
+        .logout {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>🎓 Smart Campus Dashboard</h1>
+
+<p>Welcome, <b>{{ user.username }}</b> 👋</p>
+<p>Role: <b>{{ role }}</b></p>
+
+<hr>
+
+{% if role == 'student' %}
+
+<div class="card">
+    <h2>📘 Student Details</h2>
+    <p><b>Department:</b> {{ student.department }}</p>
+    <p><b>Year:</b> {{ student.year }}</p>
+</div>
+
+<div class="card">
+    <h2>📊 Attendance Summary</h2>
+
+    <p><b>Total Classes:</b> {{ total_classes }}</p>
+    <p><b>Present:</b> {{ present_count }}</p>
+
+    <p><b>Attendance Percentage:</b> 
+        {% if attendance_percentage < 75 %}
+            <span style="color:red;">
+        {% elif attendance_percentage < 90 %}
+            <span style="color:orange;">
+        {% else %}
+            <span style="color:green;">
+        {% endif %}
+            {{ attendance_percentage|floatformat:2 }}%
+        </span>
+    </p>
+</div>
+
+<div class="card">
+    <h2>📅 Attendance</h2>
+    <table>
+        <tr>
+            <th>Date</th>
+            <th>Status</th>
+        </tr>
+
+        {% for a in attendance %}
+        <tr>
+            <td>{{ a.date }}</td>
+            <td>
+                {% if a.status %}
+                    ✅ Present
+                {% else %}
+                    ❌ Absent
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="2">No attendance records</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<div class="card">
+    <h2>📊 Marks</h2>
+    <table>
+        <tr>
+            <th>Subject</th>
+            <th>Marks</th>
+        </tr>
+
+        {% for m in marks %}
+        <tr>
+            <td>{{ m.subject }}</td>
+            <td>{{ m.marks }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="2">No marks available</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% elif role|lower == 'faculty' %}
+
+<div class="card">
+    <h2>👨‍🏫 Faculty Panel</h2>
+    <p>Welcome Faculty! You can manage attendance here.</p>
+
+    <a href="/mark-attendance/" class="btn btn-green">
+        ➕ Mark Attendance
+    </a>
+</div>
+
+{% elif role == 'admin' %}
+
+<div class="card">
+    <h2>⚙️ Admin Panel</h2>
+    <p>Manage system through admin panel.</p>
+
+    <a href="/admin/" class="btn btn-green">
+        🔧 Go to Admin Panel
+    </a>
+</div>
+
+{% endif %}
+
+<div class="logout">
+    <form method="POST" action="/logout/">
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+    </form>
+</div>
+
+</body>
+</html>
