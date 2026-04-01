@@ -30,11 +30,21 @@ def dashboard(request):
     student = None
     attendance = []
     marks = []
+
+    # 🔥 Analytics variables
     attendance_percentage = 0
     total_classes = 0
     present_count = 0
+    total_marks = 0
+    average_marks = 0
+    subject_count = 0
 
-    # If user is student → fetch related data
+    # 🔥 Graph variables
+    subjects = []
+    scores = []
+    absent_count = 0
+
+    # ✅ STUDENT VIEW
     if user.role == 'student':
         try:
             student = Student.objects.get(user=user)
@@ -42,16 +52,38 @@ def dashboard(request):
             attendance = Attendance.objects.filter(student=student)
             marks = Marks.objects.filter(student=student)
 
+            # 📊 Attendance Calculation
             total_classes = attendance.count()
             present_count = attendance.filter(status=True).count()
 
             if total_classes > 0:
                 attendance_percentage = (present_count / total_classes) * 100
-            else:
-                attendance_percentage = 0
+
+            absent_count = total_classes - present_count
+
+            # 📊 Marks Calculation
+            total_marks = sum([m.marks for m in marks])
+            subject_count = marks.count()
+
+            if subject_count > 0:
+                average_marks = total_marks / subject_count
+
+            # 📊 GRAPH DATA
+            subjects = [m.subject for m in marks]
+            scores = [m.marks for m in marks]
 
         except Student.DoesNotExist:
             student = None
+
+    # ✅ FACULTY VIEW
+    elif user.role == 'faculty':
+        attendance = Attendance.objects.all()
+        marks = Marks.objects.all()
+
+    # ✅ ADMIN VIEW
+    elif user.role == 'admin':
+        attendance = Attendance.objects.all()
+        marks = Marks.objects.all()
 
     context = {
         'user': user,
@@ -59,9 +91,20 @@ def dashboard(request):
         'student': student,
         'attendance': attendance,
         'marks': marks,
-        'attendance_percentage': attendance_percentage,
+
+        # 📊 Analytics
+        'attendance_percentage': round(attendance_percentage, 2),
         'total_classes': total_classes,
-        'present_count': present_count
+        'present_count': present_count,
+        'average_marks': round(average_marks, 2),
+        'total_marks': total_marks,
+        'subject_count': subject_count,
+
+        # 🔥 GRAPH DATA
+        'subjects': subjects,
+        'scores': scores,
+        'present_count': present_count,
+        'absent_count': absent_count,
     }
 
     return render(request, 'dashboard.html', context)
@@ -71,7 +114,6 @@ def dashboard(request):
 @login_required
 def mark_attendance(request):
 
-    # Restrict only faculty
     if request.user.role != 'faculty':
         return redirect('dashboard')
 

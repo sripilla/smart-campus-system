@@ -2,6 +2,10 @@
 <html>
 <head>
     <title>Smart Campus Dashboard</title>
+
+    <!-- ✅ Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         body {
             font-family: Arial;
@@ -50,15 +54,47 @@
             background-color:#2ecc71;
         }
 
-        .logout {
-            margin-top: 20px;
+        .summary-box {
+            font-size: 18px;
+            margin: 5px 0;
+        }
+
+        /* 🔥 FIX: Graph size */
+        .chart-container {
+            width: 400px;
+            height: 300px;
+            margin: auto;
+        }
+
+        /* 🔥 Logout top right */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logout-btn {
+            padding:8px 12px;
+            background:red;
+            color:white;
+            border:none;
+            border-radius:5px;
+            cursor:pointer;
         }
     </style>
 </head>
 
 <body>
 
-<h1>🎓 Smart Campus Dashboard</h1>
+<div class="top-bar">
+    <h1>🎓 Smart Campus Dashboard</h1>
+
+    <!-- 🔥 NEW Logout (Top Right) -->
+    <form method="POST" action="/logout/">
+        {% csrf_token %}
+        <button class="logout-btn">Logout</button>
+    </form>
+</div>
 
 <p>Welcome, <b>{{ user.username }}</b> 👋</p>
 <p>Role: <b>{{ role }}</b></p>
@@ -76,10 +112,10 @@
 <div class="card">
     <h2>📊 Attendance Summary</h2>
 
-    <p><b>Total Classes:</b> {{ total_classes }}</p>
-    <p><b>Present:</b> {{ present_count }}</p>
+    <p class="summary-box"><b>Total Classes:</b> {{ total_classes }}</p>
+    <p class="summary-box"><b>Present:</b> {{ present_count }}</p>
 
-    <p><b>Attendance Percentage:</b> 
+    <p class="summary-box"><b>Attendance Percentage:</b> 
         {% if attendance_percentage < 75 %}
             <span style="color:red;">
         {% elif attendance_percentage < 90 %}
@@ -87,9 +123,17 @@
         {% else %}
             <span style="color:green;">
         {% endif %}
-            {{ attendance_percentage|floatformat:2 }}%
+            {{ attendance_percentage }}%
         </span>
     </p>
+</div>
+
+<!-- 📊 Attendance Graph -->
+<div class="card">
+    <h2>📈 Attendance Graph</h2>
+    <div class="chart-container">
+        <canvas id="attendanceChart"></canvas>
+    </div>
 </div>
 
 <div class="card">
@@ -120,7 +164,23 @@
 </div>
 
 <div class="card">
-    <h2>📊 Marks</h2>
+    <h2>📊 Marks Summary</h2>
+
+    <p class="summary-box"><b>Total Subjects:</b> {{ subject_count }}</p>
+    <p class="summary-box"><b>Total Marks:</b> {{ total_marks }}</p>
+    <p class="summary-box"><b>Average Marks:</b> {{ average_marks }}</p>
+</div>
+
+<!-- 📊 Marks Graph -->
+<div class="card">
+    <h2>📊 Marks Graph</h2>
+    <div class="chart-container">
+        <canvas id="marksChart"></canvas>
+    </div>
+</div>
+
+<div class="card">
+    <h2>📚 Marks</h2>
     <table>
         <tr>
             <th>Subject</th>
@@ -164,12 +224,33 @@
 
 {% endif %}
 
-<div class="logout">
-    <form method="POST" action="/logout/">
-        {% csrf_token %}
-        <button type="submit">Logout</button>
-    </form>
-</div>
+<!-- 🔥 CHART JS SCRIPT -->
+<script>
+    const marksCtx = document.getElementById('marksChart');
+
+    new Chart(marksCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ subjects|safe }},
+            datasets: [{
+                label: 'Marks',
+                data: {{ scores|safe }},
+            }]
+        }
+    });
+
+    const attendanceCtx = document.getElementById('attendanceChart');
+
+    new Chart(attendanceCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Present', 'Absent'],
+            datasets: [{
+                data: [{{ present_count }}, {{ absent_count }}],
+            }]
+        }
+    });
+</script>
 
 </body>
 </html>
