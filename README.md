@@ -38,20 +38,20 @@ A web-based Smart Campus system built using Django that allows students, faculty
 ---
 
 ## 📂 Project Structure
+e
 smart-campus-system/
 │
 ├── smart_campus/
 │ ├── models.py
 │ ├── views.py
-│ ├── ai_utils.py # AI logic
+│ ├── ai_utils.py
 │
 ├── core/
 ├── templates/
 ├── manage.py
-├── db.sqlite3 (local database)
+├── db.sqlite3
 ├── requirements.txt
-├── data.json (optional)
-
+├── data.json
 
 ---
 
@@ -59,7 +59,8 @@ smart-campus-system/
 
 ### 1️⃣ Clone Repository
 ```bash
-git clone <your-repo-link>
+git clone https://github.com/sripilla/smart-campus-system.git
+git@github.com:sripilla/smart-campus-system.git
 cd smart-campus-system
 
 2️⃣ Create Virtual Environment
