@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .models import Student, Attendance, Marks
+from smart_campus.ai_utils import predict_performance
 
 
 # 🔐 LOGIN VIEW
@@ -44,6 +45,9 @@ def dashboard(request):
     scores = []
     absent_count = 0
 
+    # 🤖 AI variable
+    performance = None
+
     # ✅ STUDENT VIEW
     if user.role == 'student':
         try:
@@ -71,6 +75,9 @@ def dashboard(request):
             # 📊 GRAPH DATA
             subjects = [m.subject for m in marks]
             scores = [m.marks for m in marks]
+
+            # 🤖 AI Prediction (NEW)
+            performance = predict_performance(attendance_percentage, average_marks)
 
         except Student.DoesNotExist:
             student = None
@@ -105,6 +112,9 @@ def dashboard(request):
         'scores': scores,
         'present_count': present_count,
         'absent_count': absent_count,
+
+        # 🤖 AI RESULT (NEW)
+        'performance': performance,
     }
 
     return render(request, 'dashboard.html', context)

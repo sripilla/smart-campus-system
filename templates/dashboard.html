@@ -3,7 +3,7 @@
 <head>
     <title>Smart Campus Dashboard</title>
 
-    <!-- ✅ Chart.js CDN -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -33,7 +33,6 @@
         th, td {
             padding: 10px;
             border-bottom: 1px solid #ddd;
-            text-align: left;
         }
 
         th {
@@ -42,12 +41,10 @@
         }
 
         .btn {
-            display:inline-block;
             padding:10px 15px;
             color:white;
             text-decoration:none;
             border-radius:5px;
-            margin-top:10px;
         }
 
         .btn-green {
@@ -59,14 +56,12 @@
             margin: 5px 0;
         }
 
-        /* 🔥 FIX: Graph size */
         .chart-container {
-            width: 400px;
-            height: 300px;
+            width: 350px;
+            height: 250px;
             margin: auto;
         }
 
-        /* 🔥 Logout top right */
         .top-bar {
             display: flex;
             justify-content: space-between;
@@ -81,6 +76,21 @@
             border-radius:5px;
             cursor:pointer;
         }
+
+        .ai-box {
+            text-align: center;
+        }
+
+        .ai-good { color: green; font-weight: bold; }
+        .ai-avg { color: orange; font-weight: bold; }
+        .ai-risk { color: red; font-weight: bold; }
+
+        .warning-box {
+            background:#ffe6e6;
+            padding:10px;
+            border-radius:8px;
+            margin-top:10px;
+        }
     </style>
 </head>
 
@@ -89,7 +99,6 @@
 <div class="top-bar">
     <h1>🎓 Smart Campus Dashboard</h1>
 
-    <!-- 🔥 NEW Logout (Top Right) -->
     <form method="POST" action="/logout/">
         {% csrf_token %}
         <button class="logout-btn">Logout</button>
@@ -115,7 +124,7 @@
     <p class="summary-box"><b>Total Classes:</b> {{ total_classes }}</p>
     <p class="summary-box"><b>Present:</b> {{ present_count }}</p>
 
-    <p class="summary-box"><b>Attendance Percentage:</b> 
+    <p class="summary-box"><b>Attendance %:</b> 
         {% if attendance_percentage < 75 %}
             <span style="color:red;">
         {% elif attendance_percentage < 90 %}
@@ -128,12 +137,42 @@
     </p>
 </div>
 
-<!-- 📊 Attendance Graph -->
+<!-- Attendance Graph -->
 <div class="card">
     <h2>📈 Attendance Graph</h2>
     <div class="chart-container">
         <canvas id="attendanceChart"></canvas>
     </div>
+</div>
+
+<!-- 🤖 AI FEATURE -->
+<div class="card ai-box">
+    <h2>🤖 AI Performance Insight</h2>
+
+    {% if performance %}
+
+        {% if "Excellent" in performance %}
+            <h2 class="ai-good">{{ performance }}</h2>
+            <p>🎉 Excellent performance! Keep going strong.</p>
+
+        {% elif "Average" in performance %}
+            <h2 class="ai-avg">{{ performance }}</h2>
+            <p>⚡ You’re doing okay. Push a bit more to improve.</p>
+
+        {% else %}
+            <h2 class="ai-risk">{{ performance }}</h2>
+
+            <div class="warning-box">
+                ⚠️ <b>Warning:</b> You are at risk! Improve attendance and marks.
+            </div>
+
+            <p>📌 Focus on consistency and daily improvement.</p>
+
+        {% endif %}
+
+    {% else %}
+        <p>No prediction available</p>
+    {% endif %}
 </div>
 
 <div class="card">
@@ -148,11 +187,7 @@
         <tr>
             <td>{{ a.date }}</td>
             <td>
-                {% if a.status %}
-                    ✅ Present
-                {% else %}
-                    ❌ Absent
-                {% endif %}
+                {% if a.status %} ✅ Present {% else %} ❌ Absent {% endif %}
             </td>
         </tr>
         {% empty %}
@@ -165,13 +200,11 @@
 
 <div class="card">
     <h2>📊 Marks Summary</h2>
-
     <p class="summary-box"><b>Total Subjects:</b> {{ subject_count }}</p>
     <p class="summary-box"><b>Total Marks:</b> {{ total_marks }}</p>
     <p class="summary-box"><b>Average Marks:</b> {{ average_marks }}</p>
 </div>
 
-<!-- 📊 Marks Graph -->
 <div class="card">
     <h2>📊 Marks Graph</h2>
     <div class="chart-container">
@@ -204,52 +237,39 @@
 
 <div class="card">
     <h2>👨‍🏫 Faculty Panel</h2>
-    <p>Welcome Faculty! You can manage attendance here.</p>
-
-    <a href="/mark-attendance/" class="btn btn-green">
-        ➕ Mark Attendance
-    </a>
+    <a href="/mark-attendance/" class="btn btn-green">➕ Mark Attendance</a>
 </div>
 
 {% elif role == 'admin' %}
 
 <div class="card">
     <h2>⚙️ Admin Panel</h2>
-    <p>Manage system through admin panel.</p>
-
-    <a href="/admin/" class="btn btn-green">
-        🔧 Go to Admin Panel
-    </a>
+    <a href="/admin/" class="btn btn-green">🔧 Go to Admin Panel</a>
 </div>
 
 {% endif %}
 
-<!-- 🔥 CHART JS SCRIPT -->
 <script>
-    const marksCtx = document.getElementById('marksChart');
+new Chart(document.getElementById('marksChart'), {
+    type: 'bar',
+    data: {
+        labels: {{ subjects|safe }},
+        datasets: [{
+            label: 'Marks',
+            data: {{ scores|safe }},
+        }]
+    }
+});
 
-    new Chart(marksCtx, {
-        type: 'bar',
-        data: {
-            labels: {{ subjects|safe }},
-            datasets: [{
-                label: 'Marks',
-                data: {{ scores|safe }},
-            }]
-        }
-    });
-
-    const attendanceCtx = document.getElementById('attendanceChart');
-
-    new Chart(attendanceCtx, {
-        type: 'pie',
-        data: {
-            labels: ['Present', 'Absent'],
-            datasets: [{
-                data: [{{ present_count }}, {{ absent_count }}],
-            }]
-        }
-    });
+new Chart(document.getElementById('attendanceChart'), {
+    type: 'pie',
+    data: {
+        labels: ['Present', 'Absent'],
+        datasets: [{
+            data: [{{ present_count }}, {{ absent_count }}],
+        }]
+    }
+});
 </script>
 
 </body>
